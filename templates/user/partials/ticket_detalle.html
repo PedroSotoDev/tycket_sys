@@ -1,0 +1,11 @@
+<h5>Ticket #{{ ticket.id }}</h5>
+<p><strong>Categoría:</strong> {{ ticket.categoria }}</p>
+<p><strong>Estado:</strong> {{ ticket.estado }}</p>
+<p><strong>Queja:</strong> {{ ticket.queja }}</p>
+
+{% if ticket.asignacion %}
+<p><strong>Desarrollador:</strong> {{ ticket.asignacion.desarrollador.username }}</p>
+<p><strong>Prioridad:</strong> {{ ticket.asignacion.prioridad }}</p>
+{% else %}
+<p class="text-danger">⚠️ Este ticket no tiene asignación.</p>
+{% endif %}

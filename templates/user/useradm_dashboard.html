@@ -1,0 +1,76 @@
+{% extends "user/base.html" %}
+
+{% block title %}Admin Dashboard - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="mb-4">Dashboard Administrador</h2>
+
+  <!-- Filtro -->
+  <div class="card mb-3 p-3 shadow-sm">
+    <form method="get" class="row g-3">
+      <div class="col-md-3">{{ form.estado.label_tag }} {{ form.estado }}</div>
+      <div class="col-md-3">{{ form.categoria.label_tag }} {{ form.categoria }}</div>
+      <div class="col-md-3">{{ form.desarrollador.label_tag }} {{ form.desarrollador }}</div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Panel dividido -->
+  <div class="row">
+    <!-- Columna izquierda: tabla -->
+    <div class="col-md-6">
+      <div class="table-responsive shadow-sm">
+        <table class="table table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Queja</th>
+              <th>Categoría</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticket in tickets %}
+            <tr class="ticket-row" data-ticket-id="{{ ticket.id }}">
+              <td>{{ ticket.id }}</td>
+              <td>{{ ticket.queja|truncatechars:30 }}</td>
+              <td>{{ ticket.categoria }}</td>
+              <td>{{ ticket.estado }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center">No hay tickets</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Columna derecha: detalle dinámico -->
+    <div class="col-md-6">
+      <div id="ticket-detalle" class="card p-3 shadow-sm">
+        <p class="text-muted text-center">Selecciona un ticket para ver los detalles</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JS para cargar el detalle dinámicamente -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.ticket-row').forEach(row => {
+    row.addEventListener('click', async () => {
+      const ticketId = row.dataset.ticketId;
+      const response = await fetch(`/tickets/${ticketId}`);
+      const data = await response.json();
+      document.getElementById('ticket-detalle').innerHTML = data.html;
+    });
+  });
+});
+</script>
+{% endblock %}
+
+
+
