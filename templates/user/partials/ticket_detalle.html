@@ -4,8 +4,116 @@
 <p><strong>Queja:</strong> {{ ticket.queja }}</p>
 
 {% if ticket.asignacion %}
-<p><strong>Desarrollador:</strong> {{ ticket.asignacion.desarrollador.username }}</p>
-<p><strong>Prioridad:</strong> {{ ticket.asignacion.prioridad }}</p>
+    <p><strong>Desarrollador:</strong> {{ ticket.asignacion.desarrollador.username }}</p>
+    <p><strong>Prioridad:</strong> {{ ticket.asignacion.prioridad }}</p>
 {% else %}
-<p class="text-danger">⚠️ Este ticket no tiene asignación.</p>
+    <p class="text-danger"><strong>⚠️ Ticket no asignado</strong></p>
 {% endif %}
+
+<div>
+    <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#asiModal">
+        Asignar
+    </button>
+    <button class="btn btn-warning btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#cerrarModal">
+        Cerrar Ticket
+    </button>
+    <button class="btn btn-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#delModal">
+        Eliminar
+    </button>
+</div>
+
+
+
+
+<!-- delModal -->
+<div class="modal fade" id="delModal" tabindex="-1" aria-labelledby="delModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="delModalLabel">Confirmar eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body text-center">
+        ⚠️ Este ticket será eliminado <strong>permanentemente</strong>.<br>
+        ¿Deseas continuar?
+      </div>
+
+      <div class="modal-footer justify-content-center">
+        <form method="POST" action="{% url 'del_ticket' ticket.id %}">
+          {% csrf_token %}
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Eliminar</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- asiModal -->
+<div class="modal fade" id="asiModal" tabindex="-1" aria-labelledby="asiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+        <h5 class="modal-title" id="asiModalLabel">Asignar Ticket #{{ ticket.id }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <form method="post" action="{% url 'asignar_ticket' ticket.id %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="devSelect" class="form-label">Desarrollador</label>
+            <select class="form-select" id="devSelect" name="desarrollador" required>
+              <option value="">-- Selecciona un desarrollador --</option>
+              {% for dev in desarrolladores %}
+                <option value="{{ dev.id }}">{{ dev.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="prioridadSelect" class="form-label">Prioridad</label>
+            <select class="form-select" id="prioridadSelect" name="prioridad" required>
+              <option value="Baja">Baja</option>
+              <option value="Media">Media</option>
+              <option value="Alta">Alta</option>
+              <option value="Crítica">Crítica</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- cerrarModal -->
+<div class="modal fade" id="cerrarModal" tabindex="-1" aria-labelledby="cerrarModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cerrarModalLabel">Cerrar Ticket #{{ ticket.id }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>⚠️ Estás a punto de cerrar este ticket. Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <form id="cerrarTicketForm" method="POST" action="{% url 'cerrar_ticket' ticket.id %}">
+          {% csrf_token %}
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Cerrar Ticket</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

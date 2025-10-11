@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .forms import CreateTicketForm, FilterTicketForm, EditTicketForm
+from django.views.decorators.http import require_POST
+from .forms import CreateTicketForm, FilterTicketForm
 from .models import Ticket, Asignacion
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+from django.contrib.auth.models import User
+from django.contrib import messages
 
 
 @login_required(login_url="/login")
@@ -50,7 +53,70 @@ def ticket_detalle(request, ticket_id):
         Ticket.objects.select_related('categoria', 'estado', 'asignacion__desarrollador'),
         id=ticket_id
     )
-    html = render_to_string('user/partials/ticket_detalle.html', {'ticket': ticket}, request=request)
+    desarrolladores = User.objects.filter(is_staff=True)
+    html = render_to_string(
+        'user/partials/ticket_detalle.html',
+        {
+            'ticket': ticket,
+            'desarrolladores': desarrolladores
+        },
+        request=request
+    )
 
     return JsonResponse({'html': html})
 
+@login_required
+@require_POST
+def del_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    ticket.delete()
+    
+    return redirect('useradm_dashboard')
+
+@login_required
+@require_POST
+def asignar_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    dev_id = request.POST.get('desarrollador')
+    prioridad = request.POST.get('prioridad')
+
+    if not dev_id or not prioridad:
+        messages.error(request, "Por favor selecciona un desarrollador y una prioridad.")
+        return redirect('useradm_dashboard')
+
+    try:
+        desarrollador = User.objects.get(id=dev_id)
+    except User.DoesNotExist:
+        messages.error(request, "El desarrollador seleccionado no existe.")
+        return redirect('useradm_dashboard')
+
+    asignacion, created = Asignacion.objects.update_or_create(
+        ticket=ticket,
+        defaults={'desarrollador': desarrollador, 'prioridad': prioridad}
+    )
+
+    ticket.estado_id = 2
+    ticket.save()
+
+    if created:
+        messages.success(
+            request,
+            f"✅ Ticket #{ticket.id} asignado a {desarrollador.username} con prioridad {prioridad}. Estado actualizado a 'En Proceso'."
+        )
+    else:
+        messages.info(
+            request,
+            f"🔄 Ticket #{ticket.id} reasignado a {desarrollador.username}. Estado actualizado a 'En Proceso'."
+        )
+
+    return redirect('useradm_dashboard')
+
+@login_required
+@require_POST
+def cerrar_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    ticket.estado_id = 4
+    ticket.save()
+
+    return redirect('useradm_dashboard')
